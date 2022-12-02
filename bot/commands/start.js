@@ -4,26 +4,33 @@ import { reportError } from "../../utils/index.js";
 export default async function start(ctx) {
   try {
     if (!ctx.startPayload) {
-      ctx.reply("Для активации бота передайте параметр🧐 /start {параметр}");
+      ctx.reply("Для активации передайте параметр🧐 /start {параметр}");
       return;
     }
 
     ctx.reply("Инициализация🕑");
 
-    const user = await db.findUserById(ctx.startPayload);
+    await db.connect();
 
-    if (user) {
-      await db.updateUser({
-        id: String(user.id),
-        chat_id: String(ctx.message.chat.id),
-      });
+    const user = await db.user.findOne({ id: ctx.startPayload });
 
-      ctx.reply(`${user.name}, вы подписались на уведомления😎`);
-
+    if (!user) {
+      ctx.reply("Нет пользователя с данным параметром🤷");
       return;
     }
 
-    ctx.reply("Нет пользователя с данным параметром🤷");
+    const chat = user.telegram_chat_ids.find(
+      (chat_id) => chat_id === ctx.message.chat.id
+    );
+
+    if (chat) {
+      ctx.reply(`${user.name}, вы уже подписаны на уведомления😎`);
+      return;
+    }
+
+    await user.telegram_chat_ids.push(ctx.message.chat.id).save();
+
+    ctx.reply(`${user.name}, вы успешно подписались на уведомления😎`);
   } catch (err) {
     await reportError("START", err);
   }

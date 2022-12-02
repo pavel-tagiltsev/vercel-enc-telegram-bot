@@ -1,72 +1,71 @@
-import dayjs from "dayjs";
+import bot from "../index.js";
 import db from "../../db/index.js";
-import { reportError } from "../../utils/index.js";
+import api from "../../api.js";
+import { reportError } from "../../utils";
 
 const MESSAGE_BOT_BLOCKED = "Forbidden: bot was blocked by the user";
-const BLOCKED_CHAT_ID = "Bot blocked";
 
-export default async function notify(bot) {
+let infoReport = {
+  informedUsers: [],
+  uninformedUsers: [],
+  unregisteredUsers: [],
+};
+
+let usersToNotify = [];
+
+export default async function notify() {
   try {
-    const collections = await Promise.all([
-      db.getAllUsers(),
-      db.getAllReports(),
-    ]);
+    await Promise.all([db.connect(), api.token.set()]);
 
-    const users = collections[0];
-    const reports = collections[1];
+    const res = await Promise.all([db.user.find({}), api.lessons.get()]);
 
-    let usersToNotify = [];
+    await api.token.revoke();
 
-    let infoReport = {
-      informedUsers: [],
-      uninformedUsers: [],
-      blockedUsers: [],
-    };
+    const users = res[0];
+    const lessons = res[1];
 
     users.forEach((user) => {
-      if (user.chat_id === BLOCKED_CHAT_ID) {
-        infoReport.blockedUsers.push(user);
+      const chat_ids = user.telegram_chat_ids;
+
+      if (chat_ids.length === 0) {
+        infoReport.unregisteredUsers.push(user);
         return;
       }
 
-      if (user.chat_id) {
-        const isReportDone = reports.find((report) => {
-          const isSameDate = dayjs().isSame(report["Дата"], "day");
-          const isSameFilial = report["Выберите пансионат"] === user.filial;
+      const userUnstatusedLessons = lessons.filter((lesson) =>
+        lesson.teacherIds.find((teacherId) => teacherId === user.id)
+      );
 
-          return isSameDate && isSameFilial;
-        });
-
-        if (!isReportDone) {
-          usersToNotify.push({
-            user,
-            request: bot.telegram.sendMessage(
-              user.chat_id,
-              createUserMessage(user),
-              createInlineKeyboard()
-            ),
-          });
-
-          return;
-        }
-
+      if (userUnstatusedLessons.length === 0) {
         infoReport.uninformedUsers.push(user);
+        return;
       }
+
+      chat_ids.forEach((chat_id) => {
+        usersToNotify.push({
+          user,
+          request: bot.telegram.sendMessage(
+            chat_id,
+            createUserMessage(user),
+            createInlineKeyboard()
+          ),
+        });
+      });
     });
 
     const results = await Promise.allSettled(
       usersToNotify.map((item) => item.request)
     );
 
-    await checkResults(results, usersToNotify, infoReport);
-    await sendInfoReport(bot, infoReport);
+    await checkResults(results);
+    await sendInfoReport();
   } catch (err) {
     await reportError("NOTIFY", err);
   }
 }
 
 function createUserMessage(user) {
-  return `${user.name}, отчет филиала "${user.filial}" за сегодня не сформирован. Не забудте отправить данные😉`;
+  return `${user.name}, у вас есть не отмеченные уроки😉`;
 }
 
 function createInlineKeyboard() {
@@ -75,7 +74,7 @@ function createInlineKeyboard() {
       inline_keyboard: [
         [
           {
-            text: "Заполнить отчет",
+            text: "Отметить",
             url: process.env.REPORT_URL,
           },
         ],
@@ -84,61 +83,79 @@ function createInlineKeyboard() {
   };
 }
 
-async function checkResults(results, usersToNotify, infoReport) {
-  for (let i = 0; i < results.length; i++) {
-    if (results[i].status === "fulfilled") {
+async function checkResults(results) {
+  let usersToUnragister = [];
+  let usersWithErrors = [];
+
+  results.forEach(async (result, i) => {
+    if (result.status === "fulfilled") {
       infoReport.informedUsers.push(usersToNotify[i].user);
     }
 
-    if (results[i].status === "rejected") {
-      const message = results[i].reason.response.description;
-
+    if (result.status === "rejected") {
       if (message === MESSAGE_BOT_BLOCKED) {
-        infoReport.blockedUsers.push(usersToNotify[i].user);
+        infoReport.unregisteredUsers.push(usersToNotify[i].user);
 
-        await db.updateUser({
-          id: usersToNotify[i].user.id,
-          chat_id: BLOCKED_CHAT_ID,
-        });
+        const chat_id = result.reason.on.payload.chat_id;
+        const chat_ids = usersToNotify[i].user.telegram_chat_ids;
+
+        chat_ids.splice(chat_ids.indexOf(chat_id), 1);
+
+        usersToNotify[i].user.telegram_chat_ids = chat_ids;
+
+        usersToUnragister.push(usersToNotify[i].user.save());
 
         return;
       }
 
-      await reportError("SEND_NOTIFICATION", { message }, false);
+      const message = result.reason.response.description;
+
+      usersWithErrors.push(
+        reportError("SEND_NOTIFICATION", { message }, false)
+      );
+    }
+  });
+
+  if (usersToUnragister.length !== 0 || usersWithErrors.length !== 0) {
+    try {
+      await Promise.all([...usersToUnragister, ...usersWithErrors]);
+    } catch (err) {
+      await reportError("UNRAGISTER_AND_ERRORS", err, false);
     }
   }
 }
+async function sendInfoReport() {
+  const { informedUsers, uninformedUsers, unregisteredUsers } = infoReport;
 
-async function sendInfoReport(bot, infoReport) {
-  const isInformedUsers = infoReport.informedUsers.length !== 0;
-  const isUninformedUsers = infoReport.uninformedUsers.length !== 0;
-  const isBlockedUsers = infoReport.blockedUsers.length !== 0;
+  const isInformedUsers = informedUsers.length !== 0;
+  const isUninformedUsers = uninformedUsers.length !== 0;
+  const isBlockedUsers = unregisteredUsers.length !== 0;
 
   if (isInformedUsers || isUninformedUsers || isBlockedUsers) {
     await bot.telegram.sendMessage(
       process.env.DEV_CHAT_ID,
-      createInfoMessage(infoReport)
+      createInfoMessage()
     );
   }
 
-  function createInfoMessage(infoReport) {
+  function createInfoMessage() {
     function getList(users) {
       return users.length !== 0
-        ? users.map((user) => `${user.name} - ${user.filial}`).join("\r\n")
+        ? users.map((user) => `${user.name}`).join("\r\n")
         : "-----";
     }
 
-    const informedList = getList(infoReport.informedUsers);
-    const uninformedList = getList(infoReport.uninformedUsers);
-    const blockedList = getList(infoReport.blockedUsers);
+    const informedList = getList(informedUsers);
+    const uninformedList = getList(uninformedUsers);
+    const unregisteredList = getList(unregisteredUsers);
 
     return [
       "Оповещение получили:",
       informedList + "\r\n",
       "Оповещение не получили:",
       uninformedList + "\r\n",
-      "Бот заблокирован",
-      blockedList,
+      "Незарегестрированные",
+      unregisteredList,
     ].join("\r\n");
   }
 }
