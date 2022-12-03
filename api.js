@@ -16,6 +16,8 @@ const instance = axios.create({
 let api = {
   token: {},
   lessons: {},
+  classes: {},
+  filials: {},
 };
 
 api.token.set = async () => {
@@ -52,6 +54,43 @@ api.lessons.get = async () => {
     return res.data.lessons;
   } catch (err) {
     await reportError("GET_LESSONS", err);
+  }
+};
+
+api.lessons.getByUserId = async (user_id) => {
+  try {
+    const res = await instance.get("/lessons", {
+      params: {
+        date: ["2022-10-01", dayjs().format("YYYY-MM-DD")],
+        teacherId: user_id,
+        statusId: 0,
+        limit: 500,
+      },
+    });
+
+    return res.data.lessons;
+  } catch (err) {
+    await reportError("GET_LESSONS", err);
+  }
+};
+
+api.classes.get = async () => {
+  try {
+    const res = await instance.get("/classes");
+
+    return res.data;
+  } catch (err) {
+    await reportError("GET_CLASSES", err);
+  }
+};
+
+api.filials.get = async () => {
+  try {
+    const res = await instance.get("/filials");
+
+    return res.data;
+  } catch (err) {
+    await reportError("GET_FILIALS", err);
   }
 };
 

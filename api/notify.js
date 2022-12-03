@@ -4,11 +4,6 @@ import { reportError } from "../utils/index.js";
 export default async function notify(req, res) {
   try {
     const token = req.headers.authentication;
-    const preNotify = req.body.preNotify;
-
-    if (preNotify) {
-      return res.status(200).json({ message: "The function is awake" });
-    }
 
     if (token === process.env.NOTIFY_SECRET) {
       await commands.notify();

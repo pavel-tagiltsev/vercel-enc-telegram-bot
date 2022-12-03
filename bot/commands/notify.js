@@ -46,8 +46,8 @@ export default async function notify() {
           user,
           request: bot.telegram.sendMessage(
             chat_id,
-            createUserMessage(user),
-            createInlineKeyboard()
+            createUserMessage(user, userUnstatusedLessons),
+            createInlineKeyboard(user)
           ),
         });
       });
@@ -64,18 +64,18 @@ export default async function notify() {
   }
 }
 
-function createUserMessage(user) {
-  return `${user.name}, у вас есть не отмеченные уроки😉`;
+function createUserMessage(user, unstatusedLessons) {
+  return `${user.name}, у вас ${unstatusedLessons.length} не отмеченых уроков😉`;
 }
 
-function createInlineKeyboard() {
+function createInlineKeyboard(user) {
   return {
     reply_markup: {
       inline_keyboard: [
         [
           {
-            text: "Отметить",
-            url: process.env.REPORT_URL,
+            text: "Открыть список",
+            callback_data: `OPEN_LESSONS_LIST-${user.id}`,
           },
         ],
       ],
