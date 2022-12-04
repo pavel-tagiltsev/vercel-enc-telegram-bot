@@ -1,4 +1,4 @@
-import bot from "../bot/index.js";
+import bot from "../bot";
 
 export async function reportError(id, error, rethrow = true) {
   console.error(id, error.message);

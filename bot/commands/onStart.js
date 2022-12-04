@@ -1,7 +1,7 @@
-import db from "../../db/index.js";
-import { reportError } from "../../utils/index.js";
+import db from "../../db";
+import { reportError } from "../../utils";
 
-export default async function start(ctx) {
+export default async function onStart(ctx) {
   try {
     if (!ctx.startPayload) {
       ctx.reply("Для активации передайте параметр🧐 /start {параметр}");

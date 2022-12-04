@@ -1,5 +1,5 @@
-import start from "./start.js";
-import notify from "./notify.js";
-import openList from "./openList.js";
+import sendSummary from "./onApiTrigger/sendSummary";
+import openList from "./onCallbackQuery/openList";
+import onStart from "./onStart.js";
 
-export default { start, notify, openList };
+export default { onStart, sendSummary, openList };

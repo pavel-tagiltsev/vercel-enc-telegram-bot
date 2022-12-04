@@ -1,12 +1,12 @@
-import commands from "../bot/commands/index.js";
-import { reportError } from "../utils/index.js";
+import commands from "../bot/commands";
+import { reportError } from "../utils";
 
 export default async function notify(req, res) {
   try {
     const token = req.headers.authentication;
 
     if (token === process.env.NOTIFY_SECRET) {
-      await commands.notify();
+      await commands.sendSummary();
 
       return res.status(200).json({ message: "Notification completed" });
     }
