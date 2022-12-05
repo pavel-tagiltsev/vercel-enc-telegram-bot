@@ -28,7 +28,9 @@ export default async function onStart(ctx) {
       return;
     }
 
-    await user.telegram_chat_ids.push(ctx.message.chat.id).save();
+    user.telegram_chat_ids.push(ctx.message.chat.id);
+
+    await user.save();
 
     ctx.reply(`${user.name}, вы успешно подписались на уведомления😎`);
   } catch (err) {
