@@ -1,7 +1,7 @@
 import showLessons from "./components/showLessons.js";
 import { reportError } from "../../../../utils";
 
-export default async function openList(bot, ctx) {
+export default async function openList(ctx) {
   const {
     id: query_id,
     data: query_data,
@@ -14,12 +14,12 @@ export default async function openList(bot, ctx) {
 
   const [_, user_id] = query_data.split("-");
 
-  await bot.telegram.editMessageReplyMarkup(chat_id, message_id, null, null);
+  await ctx.telegram.editMessageReplyMarkup(chat_id, message_id, null, null);
 
   try {
     await showLessons(user_id, chat_id);
   } catch (err) {
-    await bot.telegram.editMessageReplyMarkup(
+    await ctx.telegram.editMessageReplyMarkup(
       chat_id,
       message_id,
       null,
@@ -28,5 +28,5 @@ export default async function openList(bot, ctx) {
     await reportError("OPEN_LIST", err);
   }
 
-  await bot.telegram.answerCbQuery(query_id, "Cписок открыт😀");
+  await ctx.telegram.answerCbQuery(query_id, "Cписок открыт😀");
 }

@@ -2,8 +2,8 @@ import bot from "../../..";
 import db from "../../../../db";
 import api from "../../../../api.js";
 import sendMessage from "./components/sendMessage.js";
-import checkResults from "./components/checkResults.js";
-import sendInfoReport from "./components/sendInfoReport.js";
+import checkResults from "../../../../utils/checkResults.js";
+import sendInfoReport from "../../../../utils/sendInfoReport.js";
 import { reportError } from "../../../../utils";
 
 export default async function sendSummary() {

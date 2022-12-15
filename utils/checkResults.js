@@ -1,4 +1,4 @@
-import { reportError } from "../../../../../utils";
+import { reportError } from "./index.js";
 
 export default async function checkResults(results, infoReport, usersToNotify) {
   let usersToUnragister = [];
