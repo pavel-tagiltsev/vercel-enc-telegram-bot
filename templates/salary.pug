@@ -1,0 +1,373 @@
+-
+  const isGeneral = names.length > 1;
+
+  let total = {
+    count: 0,
+    hours: 0,
+    sum: 0
+  };
+
+  if (isGeneral) {
+    names.forEach((name) => {
+      const userPieceworkTable = pieceworkTable.filter((row) => row.name === name);
+      const userPieceworkTotal = userPieceworkTable.find((row) => row.group === "total");
+
+      const userIncomes = incomeTable.filter((row) => row.name === name);
+      const userOutcomes = outcomeTable.filter((row) => row.name === name);
+
+      if (userIncomes.length) {
+        userIncomes.forEach((userIncome) => total.sum += userIncome.sum);
+      }
+
+      if (userOutcomes.length) {
+        userOutcomes.forEach((userOutcome) => total.sum -= userOutcome.sum);
+      }
+
+      total.count += userPieceworkTotal.count;
+      total.hours += userPieceworkTotal.hours;
+      total.sum += userPieceworkTotal.sum;
+    })
+  }
+
+
+doctype html
+head
+  meta(charset='UTF-8')
+  meta(http-equiv='X-UA-Compatible' content='IE=edge')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title= 'Отчет по зарплате'
+
+style.
+  html,
+  body,
+  div,
+  span,
+  applet,
+  object,
+  iframe,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  blockquote,
+  pre,
+  a,
+  abbr,
+  acronym,
+  address,
+  big,
+  cite,
+  code,
+  del,
+  dfn,
+  em,
+  img,
+  ins,
+  kbd,
+  q,
+  s,
+  samp,
+  small,
+  strike,
+  strong,
+  sub,
+  sup,
+  tt,
+  var,
+  b,
+  u,
+  i,
+  center,
+  dl,
+  dt,
+  dd,
+  ol,
+  ul,
+  li,
+  fieldset,
+  form,
+  label,
+  legend,
+  table,
+  caption,
+  tbody,
+  tfoot,
+  thead,
+  tr,
+  th,
+  td,
+  article,
+  aside,
+  canvas,
+  details,
+  embed,
+  figure,
+  figcaption,
+  footer,
+  header,
+  hgroup,
+  menu,
+  nav,
+  output,
+  ruby,
+  section,
+  summary,
+  time,
+  mark,
+  audio,
+  video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+  }
+
+  article,
+  aside,
+  details,
+  figcaption,
+  figure,
+  footer,
+  header,
+  hgroup,
+  menu,
+  nav,
+  section {
+    display: block;
+  }
+
+  body {
+    line-height: 1;
+  }
+
+  ol,
+  ul {
+    list-style: none;
+  }
+
+  html {
+    font-size: calc(100vw / 1920 * 10);
+  }
+
+  body {
+    margin: 0;
+    font-family: sans-serif;
+    text-align: center;
+    font-size: 8em;
+  }
+
+  .container {
+    max-width: 100vw;
+    padding: 0 1em;
+    padding-top: 1em;
+  }
+
+  .general-stats {
+    padding: 1em;
+    background-color: rgba(218, 165, 32, 0.509);
+    margin-bottom: 2em;
+    border-radius: 20px;
+  }
+
+  .general-stats__title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+  }
+
+  .general-stats__item {
+    margin-bottom: 0.3em;
+  }
+
+  .user-title {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-bottom: 1em;
+  }
+
+  .user-stats__total {
+    font-weight: bold;
+    font-size: 1.25em;
+    margin-bottom: 1em;
+  }
+
+  .user-stats__total > span {
+    color: darkgreen;
+  }
+
+  .user-stats__block {
+    padding: 1em;
+    border-radius: 20px;
+    margin-bottom: 1em;
+  }
+
+  .user-stats__block--piecework {
+    background-color: lightblue;
+  }
+
+  .user-stats__block--income {
+    background-color: lightgreen;
+  }
+
+  .user-stats__block--outcome {
+    background-color: lightpink;
+  }
+
+  .user-stats__title {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+  }
+
+  .user-stats__item {
+    margin-bottom: 0.2em;
+  }
+
+  .filial__list {
+    padding-top: 1em;
+  }
+
+  .filial__item {
+    margin-bottom: 3em;
+  }
+
+  .filial__title {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-bottom: 1em;
+  }
+
+  .group__item {
+    display: flex;
+    padding: 1em;
+    flex-direction: column;
+    border: 2px solid lightgrey;
+    border-radius: 20px;
+    margin-bottom: 2em;
+  }
+
+  .group-stats__title {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 1em;
+  }
+
+  .group-stats__list {
+    padding: 0.7em;
+    border-radius: 20px;
+    margin-bottom: 1em;
+    background-color: lightsteelblue;
+    margin: 0 2em;
+    margin-bottom: 1.5em;
+  }
+
+  .group-stats__item {
+    margin-bottom: 0.1em;
+  }
+
+  thead {
+    font-weight: bold;
+  }
+
+  th {
+    padding: 0.2em;
+  }
+
+body
+  div.container
+    if isGeneral
+      div.general-stats
+        h1.general-stats__title= "Общая:"
+        div.general-stats__item= `Всего занятий: ${total.count}`
+        div.general-stats__item= `Всего часов: ${total.hours}`
+        div.general-stats__item= `Всего начислино: ${total.sum}`
+
+    ul.user__list
+      each name in names 
+        li.user__item
+          h2.user-title= name
+          -
+            const userPieceworkTable = pieceworkTable.filter((row) => row.name === name);
+            const userPieceworkTotal = userPieceworkTable.find((row) => row.group === "total");
+
+            const incomes = incomeTable.filter((row) => row.name === name);
+            const outcomes = outcomeTable.filter((row) => row.name === name);
+
+            const isIncomes = incomes.length;
+            const isOutcomes = outcomes.length;
+
+            let userTotalSum = userPieceworkTotal.sum;
+
+            if (isIncomes) {
+              incomes.forEach((income) => userTotalSum += income.sum);
+            }
+
+            if (isOutcomes) {
+              outcomes.forEach((outcome) => userTotalSum -= outcome.sum);
+            }
+
+          div.user-stats
+            div.user-stats__total= 'Итого: '
+              span= userTotalSum
+
+            if isIncomes
+              div.user-stats__block.user-stats__block--income
+                h3.user-stats__title= "Надбавка"
+                each income in incomes
+                  div.user-stats__item= `${income.description} - ${income.sum}`
+
+            if isOutcomes
+              div.user-stats__block.user-stats__block--outcome
+                h3.user-stats__title= "Вычет"
+                each outcome in outcomes
+                  div.user-stats__item= `${outcome.description} - ${outcome.sum}`
+
+            div.user-stats__block.user-stats__block--piecework
+              h3.user-stats__title= "Сдельная"
+              div.user-stats__item= `Всего занятий: ${userPieceworkTotal.count}`
+              div.user-stats__item= `Всего часов: ${userPieceworkTotal.hours}`
+              div.user-stats__item= `Всего начислино: ${userPieceworkTotal.sum}`
+
+          -  const userFilials = userPieceworkTable.filter((row) => row.group !== "total");
+          -  const userUniqueFilials = Array.from(new Set(userFilials.map((row) => row.filial)));
+
+          ul.filial__list
+            each filial in userUniqueFilials
+              li.filial__item
+                h4.filial__title= filial
+
+                -  const filialGroups = userFilials.filter((row) => row.filial === filial && row.date !== "total");
+                -  const groupPieceworkTotals = userFilials.filter((row) => row.date === 'total');
+                -  const userUniqueGroups = Array.from(new Set(filialGroups.map((row) => row.group)));
+
+                ul.group__list
+                  each group in userUniqueGroups
+                    li.group__item
+                      div.group-stats__block.group-stats__block--piecework
+                        h5.group-stats__title= group
+                        - const groupPieceworkTotal = groupPieceworkTotals.find((total) => total.group === group);
+                        div.group-stats__list
+                          div.group-stats__item= `Всего занятий: ${groupPieceworkTotal.count}`
+                          div.group-stats__item= `Всего часов: ${groupPieceworkTotal.hours}`
+                          div.group-stats__item= `Всего начислино: ${groupPieceworkTotal.sum}`
+
+                      - const lessons = userPieceworkTable.filter((row) => row.group === group && row.date !== "total");
+                      table
+                        thead
+                          tr 
+                            th= 'Дата'
+                            th= 'Часов'
+                            th= 'Посещений'
+                            th= 'Сумма'
+                        tbody
+                          each lesson in lessons
+                            tr
+                              th= `${lesson.date.split(' ')[0]}`
+                              th= `${lesson.hours}`
+                              th= `${lesson.visits}/${lesson.records}`
+                              th= `${lesson.sum}`
