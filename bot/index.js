@@ -1,6 +1,7 @@
 import { Telegraf } from "telegraf";
 import commands from "./commands";
 import { reportError } from "../utils";
+import { checkCache, clearCache } from "../utils/cache.js";
 
 let bot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
@@ -18,9 +19,21 @@ bot.on("document", async (ctx) => {
 
 bot.on("callback_query", async (ctx) => {
   const [callback_type] = ctx.update.callback_query.data.split("-");
+  const chatId = ctx.update.callback_query.message.chat.id;
+  const messageId = ctx.update.callback_query.message.message_id;
+
+  const isClicked = await checkCache(chatId, messageId);
+
+  if (isClicked) {
+    return;
+  }
 
   if (callback_type === "OPEN_LIST") {
-    await commands.openList(ctx);
+    try {
+      await commands.openList(ctx);
+    } catch (error) {
+      await clearCache(chatId, messageId);
+    }
   }
 });
 

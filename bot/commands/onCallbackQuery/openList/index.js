@@ -12,12 +12,14 @@ export default async function openList(ctx) {
     },
   } = ctx.update.callback_query;
 
-  const [_, user_id] = query_data.split("-");
-
-  await ctx.telegram.editMessageReplyMarkup(chat_id, message_id, null, null);
-
   try {
+    const [_, user_id] = query_data.split("-");
+
+    await ctx.telegram.editMessageReplyMarkup(chat_id, message_id, null, null);
+
     await showLessons(user_id, chat_id);
+
+    await ctx.telegram.answerCbQuery(query_id, "Cписок открыт😀");
   } catch (err) {
     await ctx.telegram.editMessageReplyMarkup(
       chat_id,
@@ -25,8 +27,7 @@ export default async function openList(ctx) {
       null,
       reply_markup
     );
+
     await reportError("OPEN_LIST", err);
   }
-
-  await ctx.telegram.answerCbQuery(query_id, "Cписок открыт😀");
 }
