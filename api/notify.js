@@ -4,9 +4,14 @@ import { reportError } from "../utils";
 export default async function notify(req, res) {
   try {
     const token = req.headers.authentication;
+    const type = req.body.type;
 
     if (token === process.env.NOTIFY_SECRET) {
-      await commands.sendSummary();
+      if (type === "ADMIN") {
+        await commands.sendAdmin();
+      } else {
+        await commands.sendSummary();
+      }
 
       return res.status(200).json({ message: "Notification completed" });
     }
